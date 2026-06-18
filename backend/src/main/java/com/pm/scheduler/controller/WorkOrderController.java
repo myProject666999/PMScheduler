@@ -35,6 +35,12 @@ public class WorkOrderController {
         return R.ok();
     }
 
+    @PostMapping("/start-execute/{id}")
+    public R<Void> startExecute(@PathVariable Long id) {
+        workOrderService.startExecute(id);
+        return R.ok();
+    }
+
     @PostMapping("/execute/{id}")
     public R<Void> execute(@PathVariable Long id, @RequestBody WorkOrderExecuteDTO dto) {
         workOrderService.execute(id, dto);

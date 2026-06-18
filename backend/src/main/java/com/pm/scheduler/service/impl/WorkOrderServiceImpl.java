@@ -111,6 +111,21 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     }
 
     @Override
+    public void startExecute(Long id) {
+        WorkOrder order = workOrderMapper.selectById(id);
+        if (order == null) {
+            throw new BusinessException("工单不存在");
+        }
+        if (!WorkOrderStatus.DISPATCHED.equals(order.getStatus())) {
+            throw new BusinessException("工单状态不允许开始执行");
+        }
+        order.setStatus(WorkOrderStatus.EXECUTING);
+        order.setExecuteAt(LocalDateTime.now());
+        order.setUpdatedAt(LocalDateTime.now());
+        workOrderMapper.updateById(order);
+    }
+
+    @Override
     @Transactional
     public void execute(Long id, WorkOrderExecuteDTO dto) {
         WorkOrder order = workOrderMapper.selectById(id);

@@ -12,6 +12,10 @@ export function dispatchWorkOrder(id: number, data: any) {
   return post(`/work-order/dispatch/${id}`, data)
 }
 
+export function startExecuteWorkOrder(id: number) {
+  return post(`/work-order/start-execute/${id}`)
+}
+
 export function executeWorkOrder(id: number, data: any) {
   return post(`/work-order/execute/${id}`, data)
 }

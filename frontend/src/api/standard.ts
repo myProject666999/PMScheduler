@@ -1,7 +1,7 @@
 import { get, post, put, del } from './index'
 
 export function getStandards(equipmentId: number) {
-  return get('/maintenance-standard', { equipmentId })
+  return get(`/maintenance-standard/equipment/${equipmentId}`)
 }
 
 export function createStandard(data: any) {

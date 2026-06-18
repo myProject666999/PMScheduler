@@ -18,6 +18,8 @@ public interface WorkOrderService {
 
     void dispatch(Long id, WorkOrderDispatchDTO dto, Long userId);
 
+    void startExecute(Long id);
+
     void execute(Long id, WorkOrderExecuteDTO dto);
 
     void review(Long id, WorkOrderReviewDTO dto, Long userId);

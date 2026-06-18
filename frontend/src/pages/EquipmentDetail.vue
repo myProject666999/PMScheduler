@@ -20,14 +20,14 @@ const runtimeForm = ref({ hours: 0 })
 const runtimeLoading = ref(false)
 
 const showStdDialog = ref(false)
-const stdForm = ref<any>({ id: 0, itemName: '', triggerType: 'CALENDAR', cycleDays: 30, cycleRuntime: 0, description: '' })
+const stdForm = ref<any>({ id: 0, itemName: '', triggerType: 'CALENDAR', cycleDays: 30, cycleHours: 0, content: '' })
 const stdEditing = ref(false)
 
 async function loadDetail() {
   try {
     const res: any = await getEquipmentDetail(id)
     equipment.value = res.data || {}
-    recentRuntimes.value = res.data?.recentRuntimes || []
+    recentRuntimes.value = res.data?.runtimeLogs || []
   } catch {}
 }
 
@@ -42,7 +42,7 @@ async function loadStandards() {
 
 async function loadWorkOrders() {
   try {
-    const res: any = await getWorkOrderList({ equipmentId: id, page: 1, size: 10 })
+    const res: any = await getWorkOrderList({ equipmentId: id, pageNum: 1, pageSize: 10 })
     workOrders.value = res.data?.records || []
   } catch {
     workOrders.value = []
@@ -53,7 +53,7 @@ async function handleRegisterRuntime() {
   if (runtimeForm.value.hours <= 0) return
   runtimeLoading.value = true
   try {
-    await registerRuntime(id, { hours: runtimeForm.value.hours })
+    await registerRuntime(id, { runtimeValue: runtimeForm.value.hours })
     runtimeForm.value.hours = 0
     await loadDetail()
   } catch {} finally {
@@ -67,7 +67,7 @@ function openStdDialog(item?: any) {
     stdForm.value = { ...item }
   } else {
     stdEditing.value = false
-    stdForm.value = { id: 0, itemName: '', triggerType: 'CALENDAR', cycleDays: 30, cycleRuntime: 0, description: '' }
+    stdForm.value = { id: 0, itemName: '', triggerType: 'CALENDAR', cycleDays: 30, cycleHours: 0, content: '' }
   }
   showStdDialog.value = true
 }
@@ -168,8 +168,8 @@ onMounted(() => {
             <td class="px-4 py-2 font-medium text-industrial-900">{{ s.itemName }}</td>
             <td class="px-4 py-2"><StatusBadge :status="s.triggerType" /></td>
             <td class="px-4 py-2 text-gray-600">{{ s.triggerType === 'CALENDAR' ? s.cycleDays + ' 天' : '-' }}</td>
-            <td class="px-4 py-2 text-gray-600">{{ s.triggerType === 'RUNTIME' ? s.cycleRuntime + ' h' : '-' }}</td>
-            <td class="px-4 py-2 text-gray-600">{{ s.description || '-' }}</td>
+            <td class="px-4 py-2 text-gray-600">{{ s.triggerType === 'RUNTIME' ? s.cycleHours + ' h' : '-' }}</td>
+            <td class="px-4 py-2 text-gray-600">{{ s.content || '-' }}</td>
             <td class="px-4 py-2">
               <div class="flex items-center space-x-2">
                 <button @click="openStdDialog(s)" class="text-industrial-600 hover:text-industrial-900"><Pencil class="w-4 h-4" /></button>
@@ -203,8 +203,8 @@ onMounted(() => {
         <h3 class="text-sm text-gray-500 mb-2">最近登记记录</h3>
         <div class="space-y-2">
           <div v-for="r in recentRuntimes" :key="r.id" class="flex items-center justify-between text-sm border-b border-gray-100 pb-2">
-            <span class="text-gray-600">{{ r.registerDate }}</span>
-            <span class="font-medium text-industrial-900">+{{ r.hours }} h</span>
+            <span class="text-gray-600">{{ r.recordedAt }}</span>
+            <span class="font-medium text-industrial-900">+{{ r.incrementValue }} h</span>
           </div>
         </div>
       </div>
@@ -228,10 +228,10 @@ onMounted(() => {
           </tr>
           <tr v-for="wo in workOrders" :key="wo.id" class="border-b hover:bg-gray-50 cursor-pointer" @click="router.push(`/workorder/${wo.id}`)">
             <td class="px-4 py-2 font-mono text-industrial-700">{{ wo.orderNo }}</td>
-            <td class="px-4 py-2 text-gray-700">{{ wo.itemName }}</td>
+            <td class="px-4 py-2 text-gray-700">{{ wo.standardItemName }}</td>
             <td class="px-4 py-2"><StatusBadge :status="wo.status" /></td>
-            <td class="px-4 py-2 text-gray-600">{{ wo.executorName || '-' }}</td>
-            <td class="px-4 py-2 text-gray-600">{{ wo.plannedDate || '-' }}</td>
+            <td class="px-4 py-2 text-gray-600">{{ wo.executeUserName || '-' }}</td>
+            <td class="px-4 py-2 text-gray-600">{{ wo.planDate || '-' }}</td>
           </tr>
         </tbody>
       </table>
@@ -261,11 +261,11 @@ onMounted(() => {
           </div>
           <div v-if="stdForm.triggerType === 'RUNTIME'">
             <label class="block text-sm font-medium text-gray-700 mb-1">运行时数阈值</label>
-            <input v-model.number="stdForm.cycleRuntime" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-industrial-500" />
+            <input v-model.number="stdForm.cycleHours" type="number" min="1" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-industrial-500" />
           </div>
           <div>
             <label class="block text-sm font-medium text-gray-700 mb-1">说明</label>
-            <textarea v-model="stdForm.description" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-industrial-500" />
+            <textarea v-model="stdForm.content" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-industrial-500" />
           </div>
           <div class="flex justify-end space-x-3 pt-2">
             <button type="button" @click="showStdDialog = false" class="px-4 py-2 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50">取消</button>
